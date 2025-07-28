@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: pipelinebuilder-app
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL}
+      - PROMPT_BUDGET_SYSTEM=${PROMPT_BUDGET_SYSTEM}
+      - PROMPT_BUDGET_USER_CTX=${PROMPT_BUDGET_USER_CTX}
+      - PROMPT_BUDGET_SNIPPETS=${PROMPT_BUDGET_SNIPPETS}
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: tail -f /dev/null
+
+  postgres:
+    image: postgres:15
+    container_name: pipelinebuilder-postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pipelinebuilder
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # `pgvector` extension is installed via init script or custom image in production
+
+  redis:
+    image: redis:7
+    container_name: pipelinebuilder-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

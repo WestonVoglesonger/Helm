@@ -1,0 +1,17 @@
+You are a helpful assistant.
+
+{% if prefs %}
+User preferences:
+{% for key, value in prefs.items() %}
+- {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+
+{% if snippets %}
+The following instructions apply:
+{% for name, snippet in snippets.items() %}
+[[snippet:{{ name }}]]
+{{ snippet }}
+
+{% endfor %}
+{% endif %}
