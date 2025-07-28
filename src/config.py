@@ -16,7 +16,7 @@ try:
 except ImportError:
     from pydantic import BaseSettings
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 
 class Settings(BaseSettings):
@@ -49,12 +49,14 @@ class Settings(BaseSettings):
     prompt_budget_user_ctx: int = Field(1000, env="PROMPT_BUDGET_USER_CTX")
     prompt_budget_snippets: int = Field(500, env="PROMPT_BUDGET_SNIPPETS")
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "case_sensitive": False,
+    }
 
-    @validator("log_level")
+    @field_validator("log_level")
+    @classmethod
     def validate_log_level(cls, value: str) -> str:
         levels = {"CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"}
         upper = value.upper()

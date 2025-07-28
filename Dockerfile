@@ -11,27 +11,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy project files
-COPY . /app
+# Copy requirements first for better caching
+COPY requirements.txt /app/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir \
-      fastapi \
-      uvicorn \
-      pydantic \
-      pydantic-settings \
-      sqlalchemy \
-      psycopg[binary] \
-      asyncpg \
-      redis \
-      jinja2 \
-      polars \
-      openai \
-      httpx \
-      pyyaml \
-      pytest \
-      tqdm
+    && pip install --no-cache-dir -r requirements.txt
+
+# Copy project files
+COPY . /app
 
 # Default command
 CMD ["python", "-m", "src.main"]
