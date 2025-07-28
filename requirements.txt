@@ -1,25 +1,18 @@
 # Core dependencies
-fastapi>=0.104.0
-uvicorn>=0.24.0
-pydantic>=2.0.0
-pydantic-settings>=2.0.0
-sqlalchemy>=2.0.0
-psycopg[binary]>=3.0.0
-asyncpg>=0.29.0
-redis>=5.0.0
-jinja2>=3.1.0
-polars>=0.20.0
+numpy>=1.21.0
+scikit-learn>=1.0.0
 openai>=1.0.0
-httpx>=0.25.0
-pyyaml>=6.0.0
 
-# Development and testing
+# Async support
+asyncio>=3.4.3
+
+# Data handling
+dataclasses>=0.6
+
+# Testing (optional)
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
-pytest-cov>=4.0.0
-black>=23.0.0
-isort>=5.12.0
-mypy>=1.0.0
 
-# Optional: for vector operations
-pgvector>=0.2.0 
+# Documentation (optional)
+sphinx>=4.0.0
+sphinx-rtd-theme>=1.0.0 
