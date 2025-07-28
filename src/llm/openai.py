@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import List, Optional
 
-import openai
+from openai import AsyncOpenAI
 
 from .base import BaseLLMAdapter
 from ..config import get_settings
@@ -24,7 +24,7 @@ class OpenAIAdapter(BaseLLMAdapter):
 
     def __init__(self) -> None:
         settings = get_settings()
-        openai.api_key = settings.openai_api_key
+        self.client = AsyncOpenAI(api_key=settings.openai_api_key)
         self.model = settings.openai_model
         self.embedding_model = settings.embedding_model
 
@@ -47,7 +47,7 @@ class OpenAIAdapter(BaseLLMAdapter):
             {"role": "user", "content": user_msg},
         ]
         try:
-            response = await openai.ChatCompletion.acreate(
+            response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
                 temperature=0.7,
@@ -56,7 +56,7 @@ class OpenAIAdapter(BaseLLMAdapter):
             logger.exception("OpenAI chat completion failed: %s", exc)
             raise
         # Extract the text from the first choice
-        return response.choices[0].message.get("content", "")
+        return response.choices[0].message.content or ""
 
     async def embed(self, text: str) -> List[float]:
         """Call the OpenAI embeddings endpoint."""
@@ -66,7 +66,7 @@ class OpenAIAdapter(BaseLLMAdapter):
                 "OPENAI_API_KEY is not set. Please configure your API key."
             )
         try:
-            response = await openai.Embedding.acreate(
+            response = await self.client.embeddings.create(
                 model=self.embedding_model, input=[text]
             )
         except Exception as exc:

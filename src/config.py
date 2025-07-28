@@ -1,15 +1,22 @@
 """Application configuration module.
 
-This module defines a unified settings object using Pydantic's `BaseSettings`.  All
-environment variables are read once into a single `Settings` instance which is
-then injected into other modules as needed.  Modules should **not** access
+This module defines a unified settings object using Pydantic's `BaseSettings`.
+All environment variables are read once into a single `Settings` instance which
+is then injected into other modules as needed.  Modules should **not** access
 environment variables directly.
 """
 
 from __future__ import annotations
 
 from functools import lru_cache
-from pydantic import BaseSettings, Field, validator
+
+# Try to import BaseSettings from pydantic_settings (Pydantic v2) and fall back to pydantic (v1)
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    from pydantic import BaseSettings
+
+from pydantic import Field, validator
 
 
 class Settings(BaseSettings):

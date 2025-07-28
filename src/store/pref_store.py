@@ -11,15 +11,20 @@ from __future__ import annotations
 
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from sqlalchemy import Column, Integer, String, JSON, Table, MetaData, select
+from sqlalchemy import Column, String, JSON, Table, MetaData, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.ext.asyncio import async_sessionmaker
-import aioredis
+
+# Use the asyncio support provided by redis-py (redis>=4).  If unavailable,
+# set aioredis to None so that the code falls back to in-memory caching.
+try:
+    import redis.asyncio as aioredis  # type: ignore[attr-defined]
+except Exception:
+    aioredis = None  # type: ignore
 
 from ..config import get_settings
-
 
 logger = logging.getLogger(__name__)
 
@@ -38,12 +43,17 @@ class PrefStore:
         self.async_session: async_sessionmaker[AsyncSession] = async_sessionmaker(
             self.engine, expire_on_commit=False
         )
-        # Redis client
+        # Redis client: attempt to connect if redis.asyncio is available
         self.redis = None
-        try:
-            self.redis = aioredis.from_url(settings.redis_url, encoding="utf-8", decode_responses=True)
-        except Exception as exc:
-            logger.warning("Could not connect to Redis: %s", exc)
+        if aioredis is not None:
+            try:
+                self.redis = aioredis.from_url(
+                    settings.redis_url,
+                    encoding="utf-8",
+                    decode_responses=True,
+                )
+            except Exception as exc:
+                logger.warning("Could not connect to Redis: %s", exc)
         # Define table metadata
         metadata = MetaData()
         self.table = Table(
@@ -52,8 +62,8 @@ class PrefStore:
             Column("id", String, primary_key=True),
             Column("data", JSON, nullable=False),
         )
-        # Create table if not exists
-        self._create_table_task = self._create_table(metadata)
+        # Store metadata for table creation
+        self._metadata = metadata
 
     async def _create_table(self, metadata: MetaData) -> None:
         async with self.engine.begin() as conn:
@@ -65,6 +75,9 @@ class PrefStore:
         If a cached value exists in Redis, it is returned.  Otherwise the
         database is queried.  On cache miss, the result is cached.
         """
+        # Ensure table exists
+        await self._create_table(self._metadata)
+        
         # Attempt cache
         if self.redis is not None:
             cached = await self.redis.get(self._cache_prefix + user_id)
@@ -93,7 +106,11 @@ class PrefStore:
 
         Updates the database and invalidates the cache.
         """
+        # Ensure table exists
+        await self._create_table(self._metadata)
+        
         from sqlalchemy.dialects.postgresql import insert as pg_insert
+
         async with self.async_session() as session:
             async with session.begin():
                 stmt = pg_insert(self.table).values(id=user_id, data=prefs)

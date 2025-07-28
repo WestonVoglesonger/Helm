@@ -1,0 +1,6 @@
+- user_id: alice
+  message: "Hello, assistant!"
+- user_id: alice
+  message: "What can you do for me?"
+- user_id: bob
+  message: "Can you help me with a coding task?" 
